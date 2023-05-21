@@ -93,11 +93,11 @@ def _run_replicate_model(options):
 
 def _get_choice_from_text_index(text, index):
     choice = {
-                "text": text,
-                "index": index,
-                "logprobs": None,
-                "finish_reason": None,
-            }
+        "text": text,
+        "index": index,
+        "logprobs": None,
+        "finish_reason": None,
+    }
     return choice
 
 def create_completion_stream(options, template):
