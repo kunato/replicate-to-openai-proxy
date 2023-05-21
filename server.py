@@ -7,7 +7,7 @@ import secrets
 import time
 import replicate
 import waitress
-from flask import Flask, Response, abort, jsonify
+from flask import Flask, Response, abort, jsonify, render_template
 from flask_cors import CORS
 from utils import parse_options, reduce_choice
 
@@ -24,6 +24,13 @@ CORS(app, origins='*')
 COMPLETION_MAX_INTERVAL = 50
 SERVER_MODEL_NAME = 'default'
 
+
+
+
+@app.route("/")
+def render_playground():
+    """Render model playground."""
+    return render_template("playground.html", model=SERVER_MODEL_NAME)
 
 @app.route("/v1/models")
 def list_models():
@@ -114,16 +121,15 @@ def create_completion_stream(options, template):
             if index not in times:
                 times[index] = now
             buffers[index].append(choice)
-            if index > 0:
-                # Yield data when exceeded the maximum buffering interval.
-                elapsed = (now - times[index - 1]) // 1_000_000
-                if elapsed > COMPLETION_MAX_INTERVAL:
-                    data = template.copy()
-                    data["choices"] = [reduce_choice(buffers[index])]
-                    yield serialize(data)
-                    buffers[index].clear()
-                    times[index] = now
-            index += 1
+            
+            # Yield data when exceeded the maximum buffering interval.
+            elapsed = (now - times[index]) // 1_000_000
+            if elapsed > COMPLETION_MAX_INTERVAL:
+                data = template.copy()
+                data["choices"] = [reduce_choice(buffers[index])]
+                yield serialize(data)
+                buffers[index].clear()
+                times[index] = now
 
         # Yield remaining data in the buffers.
         for _, buffer in buffers.items():
@@ -152,7 +158,6 @@ def create_completion_json(options, template):
         if index not in buffers:
             buffers[index] = []
         buffers[index].append(choice)
-        index += 1
 
     # Merge choices with the same index.
     data = template.copy()
