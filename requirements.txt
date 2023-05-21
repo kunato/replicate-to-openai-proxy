@@ -1,4 +1,4 @@
 flask
 flask_cors
-replicate
+git+https://github.com/kunato/replicate-python
 waitress
